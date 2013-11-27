@@ -1,6 +1,6 @@
 %h1 Posts List
 
 .posts_list
-  #postItem{ style: "border:1px solid gray;padding:10px;margin:0 0 10px 0;display:none;" }
-    %h3 <%= title %>
-    %p  <%= content %>
+  %form#post_form
+    %p= input_tag :title
+    %p= input_tag :content
