@@ -27,47 +27,6 @@ Post = Backbone.Model.extend
         log data
         log status
 
-# Collections
-Posts = Backbone.Collection.extend
-  model: Post
-  url: '/posts'
-
-  initialize: ->
-    do @fetch_callbacks_init
-
-  fetch_callbacks_init: ->
-    # fetch callbacks
-    @on 'request', (collection, xhr, request_options) ->
-      posts = request_options.posts
-      log "Collection uploading"
-
-      xhr.success (data, state, xhr) =>
-        log "XHR completed and success"
-        @trigger "posts:success:uploaded", data
-
-    @on 'sync', (collection, ary, request_options) ->
-      log "Collection was changed"
-
-PostItem = Backbone.View.extend
-  tagName:   "div"
-  className: "post"
-
-  template: _.template """
-    <h3><%- title %></h3>
-    <p><%- content %></p>
-  """
-  
-  events:
-    click: "click_on_post"
-
-  click_on_post: -> log "Post was clicked!"
-
-  initialize: (opts = {}) ->
-    @post = opts.post
-
-  render: ->
-    @$el.html @template @post.toJSON()
-
 PostsList = Backbone.View.extend
   el: ".posts_list"
 
@@ -84,10 +43,79 @@ PostsList = Backbone.View.extend
   appendPost: (post_content) ->
     @$el.append post_content
 
+PostForm = Backbone.View.extend
+  el: "#post_form"
+  
+  events:
+    "keyup #post_title":   "update_model"
+    "keyup #post_content": "update_model"
+
+  initialize: ->
+    @model = new Post
+    @model.on 'change', @render, @
+    
+    do @render
+
+  render: ->
+    $('[name=post_title]',   @$el).val @model.get 'title'
+    $('[name=post_content]', @$el).val @model.get 'content'
+
+  update_model: (e) ->
+    input = $ e.target
+    [model_name, field_name] = input.attr('id').split('_')
+    @model.set field_name, input.val()
+
+post_form_init = =>
+  @post_form = new PostForm
+
 $ ->
-  posts_list = new PostsList
+  do post_form_init
+
+  # post_form.model.set("title", 1111)  
+  # posts_list = new PostsList
 
 ####################################################
+
+# Collections
+# Posts = Backbone.Collection.extend
+#   model: Post
+#   url: '/posts'
+
+#   initialize: ->
+#     do @fetch_callbacks_init
+
+#   fetch_callbacks_init: ->
+#     # fetch callbacks
+#     @on 'request', (collection, xhr, request_options) ->
+#       posts = request_options.posts
+#       log "Collection uploading"
+
+#       xhr.success (data, state, xhr) =>
+#         log "XHR completed and success"
+#         @trigger "posts:success:uploaded", data
+
+#     @on 'sync', (collection, ary, request_options) ->
+#       log "Collection was changed"
+
+# PostItem = Backbone.View.extend
+#   tagName:   "div"
+#   className: "post"
+
+#   template: _.template """
+#     <h3><%- title %></h3>
+#     <p><%- content %></p>
+#   """
+  
+#   events:
+#     click: "click_on_post"
+
+#   click_on_post: -> log "Post was clicked!"
+
+#   initialize: (opts = {}) ->
+#     @post = opts.post
+
+#   render: ->
+#     @$el.html @template @post.toJSON()
 
 # post = new Post
 # item = new PostItem { post: post } 
