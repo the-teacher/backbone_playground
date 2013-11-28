@@ -62,7 +62,7 @@ PostForm = Backbone.View.extend
 
   update_model: (e) ->
     input = $ e.target
-    [model_name, field_name] = input.attr('id').split('_')
+    field_name = _.last input.attr('id').split('_')
     @model.set field_name, input.val()
 
 post_form_init = =>
