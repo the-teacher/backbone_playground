@@ -7,6 +7,11 @@ class PostsController < ApplicationController
     render json: Post.find(params[:id])
   end
 
+  def create
+    post = Post.create post_params
+    render json: (post.errors.blank? ? post : { errors: post.errors })
+  end
+
   def update
     post = Post.find params[:id]
     post.update post_params

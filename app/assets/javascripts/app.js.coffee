@@ -1,47 +1,44 @@
 Post = Backbone.Model.extend
-  urlRoot: "/posts/"
+  urlRoot: "/posts"
 
   defaults:
     title:   "Default Title"
     content: "Default content"
-    user_session: Math.random()
+    errors:  {}
 
-  initialize: (params) ->
-    @attributes.test_attr = params?.test_attr || "Test Attr is undefined"
+  initialize: ->
     do @validations_init
+    
+    @on "change:errors", (model, errors) ->
+      @errors_block errors
 
   validations_init: ->
     @validate = ->
-      return "invalid Post" if @get('id') > 3
+      errors = {}
 
-    @on 'invalid', (model, error) ->
-      log "Validation Error", model, error
+      if @get("title").length is 0
+        errors["title"] ||= []
+        errors["title"].push "Can't be blank"
 
-  show_content: -> @attributes.content
+      if @get("content").length is 0
+        errors["content"] ||= []
+        errors["content"].push "Can't be blank"
 
-  sync: ->
-    $.ajax
-      dataType: 'json'
-      url: "/posts/" + @get('id')
-      success: (data, status) ->
-        log data
-        log status
+      valid = (_.map errors, (err) -> err).length is 0
+      return errors if !valid
 
-PostsList = Backbone.View.extend
-  el: ".posts_list"
+      false
 
-  initialize: ->
-    @posts = new Posts
-    @listenTo @posts, 'posts:success:uploaded', @render
-    @posts.fetch()
+    @on 'invalid', (model, errors) ->
+      @errors_block errors
 
-  render: ->
-    @posts.each (post) =>
-      post_item = new PostItem { post: post }
-      @appendPost post_item.render()
+  errors_block: (errors) ->
+    for name, error of errors
+      log "========================="
+      log "Show validation errors: #{name} - #{error}"
+      log "========================="
 
-  appendPost: (post_content) ->
-    @$el.append post_content
+    @set "errors", {}
 
 PostForm = Backbone.View.extend
   el: "#post_form"
@@ -49,11 +46,11 @@ PostForm = Backbone.View.extend
   events:
     "keyup #post_title":   "update_model"
     "keyup #post_content": "update_model"
+    "submit": "submit"
 
   initialize: ->
     @model = new Post
     @model.on 'change', @render, @
-    
     do @render
 
   render: ->
@@ -65,16 +62,32 @@ PostForm = Backbone.View.extend
     field_name = _.last input.attr('id').split('_')
     @model.set field_name, input.val()
 
+  submit: ->
+    @model.save()
+    false
+
 post_form_init = =>
   @post_form = new PostForm
 
 $ ->
   do post_form_init
 
-  # post_form.model.set("title", 1111)  
-  # posts_list = new PostsList
-
 ####################################################
+
+# post_form.model.set("title", 1111)  
+# posts_list = new PostsList
+
+# Post = Backbone.Model.extend
+#   urlRoot: "/posts"
+
+#   sync: ->
+#     $.ajax
+#       method: 'POST'
+#       url:    '/posts'
+#       dataType: 'json'
+#       success: (data, status) ->
+#         log data
+#         log status
 
 # Collections
 # Posts = Backbone.Collection.extend
@@ -96,6 +109,24 @@ $ ->
 
 #     @on 'sync', (collection, ary, request_options) ->
 #       log "Collection was changed"
+
+
+# PostsList = Backbone.View.extend
+#   el: ".posts_list"
+
+#   initialize: ->
+#     @posts = new Posts
+#     @listenTo @posts, 'posts:success:uploaded', @render
+#     @posts.fetch()
+
+#   render: ->
+#     @posts.each (post) =>
+#       post_item = new PostItem { post: post }
+#       @appendPost post_item.render()
+
+#   appendPost: (post_content) ->
+#     @$el.append post_content
+
 
 # PostItem = Backbone.View.extend
 #   tagName:   "div"
